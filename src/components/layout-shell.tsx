@@ -1,16 +1,22 @@
-'use client'
+"use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import Toolbar from '@/components/tools/toolbar'
-import CanvasEditor from '@/components/canvas/canvas-wrapper'
-import PreviewPanel from '@/components/preview/preview-panel'
-import { Button } from '@/components/ui/button'
-import { Menu, Download } from 'lucide-react'
-import { useAppStore } from '@/store/use-store'
-import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
+import CanvasEditor from "@/components/canvas/canvas-wrapper";
+import PreviewPanel from "@/components/preview/preview-panel";
+import Toolbar from "@/components/tools/toolbar";
+import { Button } from "@/components/ui/button";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { Download, Menu } from "lucide-react";
+// import { useAppStore } from '@/store/use-store' // No longer needed for tabs
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { Badge } from "./ui/badge";
 
 export default function LayoutShell() {
-  const { activeTab, setActiveTab } = useAppStore()
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden font-sans">
@@ -20,18 +26,20 @@ export default function LayoutShell() {
           <div className="h-8 w-8 bg-primary rounded-md flex items-center justify-center text-primary-foreground font-bold text-lg">
             E
           </div>
-          <h1 className="font-semibold text-foreground hidden sm:block">L&apos;Empreinte</h1>
+          <h1 className="font-semibold text-foreground hidden sm:block">
+            L&apos;Empreinte
+          </h1>
         </div>
-        
+
         <div className="flex items-center gap-2">
-           <Button 
-             size="sm" 
-             className="gap-2"
-             onClick={() => window.dispatchEvent(new Event('export-request'))}
-           >
-             <Download className="w-4 h-4" />
-             Exporter
-           </Button>
+          <Button
+            size="sm"
+            className="gap-2"
+            onClick={() => window.dispatchEvent(new Event("export-request"))}
+          >
+            <Download className="w-4 h-4" />
+            Exporter
+          </Button>
         </div>
       </header>
 
@@ -43,47 +51,51 @@ export default function LayoutShell() {
         </aside>
 
         {/* Workspace Area */}
-        <main className="flex-1 flex flex-col relative bg-muted/50">
-          <Tabs 
-            value={activeTab} 
-            onValueChange={(v) => setActiveTab(v as 'editor' | 'preview')}
-            className="flex-1 flex flex-col"
+        <main className="flex-1 flex flex-col relative bg-muted/50 overflow-hidden">
+          <ResizablePanelGroup
+            id="main-layout-group"
+            direction={isDesktop ? "horizontal" : "vertical"}
+            className="size-full"
           >
-            <div className="flex-none p-2 flex justify-center border-b border-border/50 bg-background/50 backdrop-blur-sm">
-              <TabsList>
-                <TabsTrigger value="editor">Édition (2D)</TabsTrigger>
-                <TabsTrigger value="preview">Aperçu (Mug)</TabsTrigger>
-              </TabsList>
-            </div>
+            <ResizablePanel id="editor-panel" defaultSize={65} minSize={35}>
+              <div className="flex h-full items-center justify-center relative">
+                <Badge variant="default" className="absolute top-2 left-2 z-10">
+                  Édition (2D)
+                </Badge>
+                <CanvasEditor />
+              </div>
+            </ResizablePanel>
 
-            <div className="flex-1 relative overflow-hidden">
-              <TabsContent value="editor" className="absolute inset-0 m-0 border-0 h-full w-full data-[state=inactive]:hidden">
-                 <CanvasEditor />
-              </TabsContent>
-              <TabsContent value="preview" className="absolute inset-0 m-0 border-0 h-full w-full data-[state=inactive]:hidden">
-                 <PreviewPanel />
-              </TabsContent>
-            </div>
-          </Tabs>
+            <ResizableHandle id="main-layout-handle" />
+
+            <ResizablePanel id="preview-panel" defaultSize={35} minSize={35}>
+              <div className="flex h-full items-center justify-center relative bg-muted/20">
+                <Badge variant="default" className="absolute top-2 left-2 z-10">
+                  Aperçu (Mug)
+                </Badge>
+                <PreviewPanel />
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
 
           {/* Mobile Bottom Bar (Drawer Trigger) */}
-          <div className="md:hidden flex-none h-16 bg-card border-t border-border flex items-center justify-around px-4">
-             <Drawer>
-               <DrawerTrigger asChild>
-                 <Button variant="outline" className="w-full">
-                   <Menu className="w-4 h-4 mr-2" />
-                   Outils & Réglages
-                 </Button>
-               </DrawerTrigger>
-               <DrawerContent className="h-[50vh]">
-                 <div className="p-4 h-full overflow-auto">
-                   <Toolbar />
-                 </div>
-               </DrawerContent>
-             </Drawer>
+          <div className="md:hidden flex-none h-16 bg-card border-t border-border flex items-center justify-around px-4 z-20">
+            <Drawer>
+              <DrawerTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <Menu className="w-4 h-4 mr-2" />
+                  Outils & Réglages
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent className="h-[50vh]">
+                <div className="p-4 h-full overflow-auto">
+                  <Toolbar />
+                </div>
+              </DrawerContent>
+            </Drawer>
           </div>
         </main>
       </div>
     </div>
-  )
+  );
 }

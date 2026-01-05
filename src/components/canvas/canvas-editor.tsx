@@ -9,6 +9,7 @@ import { useEffect, useRef } from "react";
 export default function CanvasEditor() {
   const canvasEl = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const {
     setSelectedObject,
     setZoom,
@@ -239,12 +240,17 @@ export default function CanvasEditor() {
       window.removeEventListener("layer-action", handleLayerAction);
       window.removeEventListener("request-preview", handleRequestPreview);
       window.removeEventListener("export-request", handleExport);
-      canvas.dispose();
+
+      // Handle potential async dispose
+      const disposeResult = canvas.dispose();
+      if (disposeResult instanceof Promise) {
+        disposeResult.catch((e) => console.error("Error disposing canvas:", e));
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setSelectedObject, setCanvasState, setPreviewImage]); // Added dependencies Handle Responsiveness (Scale to fit container)
   useEffect(() => {
-    if (!containerRef.current || !canvasEl.current) return;
+    if (!containerRef.current || !canvasWrapperRef.current) return;
 
     const resizeCanvas = () => {
       const container = containerRef.current;
@@ -253,16 +259,17 @@ export default function CanvasEditor() {
       const containerWidth = container.clientWidth;
       const containerHeight = container.clientHeight;
 
-      // Calculate scale to fit
-      const scaleX = containerWidth / CANVAS_WIDTH;
-      const scaleY = containerHeight / CANVAS_HEIGHT;
-      const scale = Math.min(scaleX, scaleY, 1); // Don't scale up beyond 1 if not needed, or maybe we should?
-      // Actually we want to fit it in view, so min(scaleX, scaleY) is correct.
-      // But we probably want some padding.
+      if (containerWidth === 0 || containerHeight === 0) return;
 
-      const wrapper = canvasEl.current?.parentElement;
+      // Calculate scale to fit
+      // Add some padding (e.g. 40px) to ensure it doesn't touch edges
+      const scaleX = (containerWidth - 40) / CANVAS_WIDTH;
+      const scaleY = (containerHeight - 40) / CANVAS_HEIGHT;
+      const scale = Math.min(scaleX, scaleY, 1);
+
+      const wrapper = canvasWrapperRef.current;
       if (wrapper) {
-        wrapper.style.transform = `scale(${scale * 0.95})`; // 95% to have some margin
+        wrapper.style.transform = `scale(${scale})`;
         wrapper.style.transformOrigin = "center center";
       }
 
@@ -281,13 +288,16 @@ export default function CanvasEditor() {
       ref={containerRef}
       className="w-full h-full flex items-center justify-center bg-muted overflow-hidden relative"
     >
-      <div className="shadow-xl border border-border relative">
+      <div
+        ref={canvasWrapperRef}
+        className="shadow-xl border border-border relative bg-white"
+      >
         <canvas ref={canvasEl} />
       </div>
 
       <Badge
         variant="outline"
-        className="absolute bottom-4 right-4 pointer-events-none"
+        className="absolute bottom-4 right-4 pointer-events-none bg-background/80 backdrop-blur"
       >
         {Math.round(zoom * 100)}%
       </Badge>
