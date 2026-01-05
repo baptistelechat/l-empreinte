@@ -57,7 +57,11 @@ export default function LayoutShell() {
             direction={isDesktop ? "horizontal" : "vertical"}
             className="size-full"
           >
-            <ResizablePanel id="editor-panel" defaultSize={65} minSize={35}>
+            <ResizablePanel
+              id="editor-panel"
+              defaultSize={isDesktop ? 65 : 50}
+              minSize={isDesktop ? 40 : 35}
+            >
               <div className="flex h-full items-center justify-center relative">
                 <Badge variant="default" className="absolute top-2 left-2 z-10">
                   Édition (2D)
@@ -68,7 +72,11 @@ export default function LayoutShell() {
 
             <ResizableHandle id="main-layout-handle" />
 
-            <ResizablePanel id="preview-panel" defaultSize={35} minSize={35}>
+            <ResizablePanel
+              id="preview-panel"
+              defaultSize={isDesktop ? 35 : 50}
+              minSize={isDesktop ? 20 : 35}
+            >
               <div className="flex h-full items-center justify-center relative bg-muted/20">
                 <Badge variant="default" className="absolute top-2 left-2 z-10">
                   Aperçu (Mug)
